@@ -81,6 +81,164 @@ function createPrevButton(currentSection) {
   `;
 }
 
+// Coordinates for Dolf Technologies branches
+const DOLF_LOCATIONS = {
+  egypt: {
+    name: "DOLF TECHNOLOGIES، 3 Abd El-Salam Ibrahim, Al Matar, El Nozha, Cairo Governorate 4470311, Egypt",
+    lat: 30.0444,
+    lng: 31.2357
+  },
+  sa: {
+    name: "2925 طريق الأمير سلطان، Al Andalus, Sidra Complex, Al Khobar 34437",
+    lat: 26.333348927579664, 
+    lng: 50.18430572906374
+  }
+};
+
+// Leaflet map instance
+let dolfMap = null;
+let mapMarkers = [];
+
+// Initialize Leaflet map
+function initDolfMap(mode = 'all') {
+  // Check if Leaflet is loaded
+  if (typeof L === 'undefined') {
+    console.error('Leaflet library not loaded!');
+    return;
+  }
+  
+  const mapDiv = document.getElementById('map');
+  if (!mapDiv) {
+    console.error('Map div not found');
+    return;
+  }
+  
+  console.log('Map div found, initializing Leaflet map...');
+  
+  // Clear existing map if any
+  if (dolfMap) {
+    dolfMap.remove();
+    dolfMap = null;
+    mapMarkers = [];
+  }
+  
+  try {
+    // Create new map
+    dolfMap = L.map('map', {
+      zoomControl: true,
+      attributionControl: false
+    });
+    
+    // Add OpenStreetMap tiles
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(dolfMap);
+    
+    console.log('Map initialized successfully, updating with mode:', mode);
+    
+    // Update map based on mode
+    updateDolfMap(mode);
+  } catch (error) {
+    console.error('Error initializing map:', error);
+  }
+}
+
+// Update map markers and view
+function updateDolfMap(mode) {
+  const mapAddress = document.getElementById('mapAddress');
+  if (!dolfMap || !mapAddress) {
+    console.error('Map or address element not found. dolfMap:', dolfMap, 'mapAddress:', mapAddress);
+    return;
+  }
+  
+  console.log('Updating map with mode:', mode);
+  
+  // Clear existing markers
+  mapMarkers.forEach(marker => dolfMap.removeLayer(marker));
+  mapMarkers = [];
+  
+  if (mode === 'egypt') {
+    mapAddress.textContent = DOLF_LOCATIONS.egypt.name;
+    addMapMarker(DOLF_LOCATIONS.egypt, 'Egypt Branch', 'red');
+    dolfMap.setView([DOLF_LOCATIONS.egypt.lat, DOLF_LOCATIONS.egypt.lng], 17);
+    console.log('Set map to Egypt view');
+  } else if (mode === 'sa') {
+    mapAddress.textContent = DOLF_LOCATIONS.sa.name;
+    addMapMarker(DOLF_LOCATIONS.sa, 'SA Branch', 'blue');
+    dolfMap.setView([DOLF_LOCATIONS.sa.lat, DOLF_LOCATIONS.sa.lng], 17);
+    console.log('Set map to SA view');
+  } else {
+    // All locations - show both with multiple markers
+    mapAddress.textContent = 'Dolf Technologies - Multiple Locations (Red Pin: Egypt Branch, Blue Pin: SA Branch)';
+    
+    // Add both markers
+    addMapMarker(DOLF_LOCATIONS.egypt, 'Egypt Branch', 'red');
+    addMapMarker(DOLF_LOCATIONS.sa, 'SA Branch', 'blue');
+    
+    // Fit bounds to show both locations
+    const bounds = L.latLngBounds([
+      [DOLF_LOCATIONS.egypt.lat, DOLF_LOCATIONS.egypt.lng],
+      [DOLF_LOCATIONS.sa.lat, DOLF_LOCATIONS.sa.lng]
+    ]);
+    dolfMap.fitBounds(bounds, { padding: [20, 20] });
+    console.log('Set map to show both locations with bounds:', bounds);
+  }
+}
+
+// Add a marker to the map
+function addMapMarker(location, label, color) {
+  try {
+    // Create custom pin icon with the specified color
+    const customIcon = L.divIcon({
+      className: 'custom-pin-marker',
+      html: `
+        <div style="
+          position: relative;
+          width: 0;
+          height: 0;
+        ">
+          <div style="
+            position: absolute;
+            top: -20px;
+            left: -10px;
+            width: 20px;
+            height: 20px;
+            background-color: ${color};
+            border: 2px solid white;
+            border-radius: 50% 50% 50% 0;
+            transform: rotate(-45deg);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+          "></div>
+          <div style="
+            position: absolute;
+            top: -8px;
+            left: -2px;
+            width: 4px;
+            height: 4px;
+            background-color: white;
+            border-radius: 50%;
+          "></div>
+        </div>
+      `,
+      iconSize: [20, 20],
+      iconAnchor: [10, 20]
+    });
+    
+    const marker = L.marker([location.lat, location.lng], {
+      icon: customIcon
+    }).addTo(dolfMap);
+    
+    // Add popup with location info
+    marker.bindPopup(`<b>${label}</b><br>${location.name}`);
+    
+    mapMarkers.push(marker);
+    console.log(`Added ${color} pin marker for ${label} at [${location.lat}, ${location.lng}]`);
+  } catch (error) {
+    console.error(`Error adding marker for ${label}:`, error);
+  }
+}
+
 // Function to navigate to a specific section
 function navigateToSection(section) {
   // Find the corresponding menu item and trigger click
@@ -92,19 +250,49 @@ function navigateToSection(section) {
     // Handle locations (Dolf Headquarters Map)
     mainContent.innerHTML = `
       <h2 style="font-size:2em;margin-bottom:8px;"><span style="font-size:1.2em;">📍</span> Dolf Headquarters Map</h2>
-      <div class="dolf-map-section">
-        <div class="dolf-map-address">2925 طريق الأمير سلطان،،, الأندلس، 2857, Sidra Complex, الخبر 34437</div>
-        <iframe
-          class="dolf-map-iframe"
-          src="https://www.google.com/maps?q=26.293857,50.196393&hl=ar&z=17&output=embed"
-          allowfullscreen=""
-          loading="lazy"
-          referrerpolicy="no-referrer-when-downgrade"
-          title="Dolf Headquarters Location Map"
-        ></iframe>
+      
+      <div class="map-tabs">
+        <button class="map-tab active" data-location="all">All</button>
+        <button class="map-tab" data-location="egypt">Egypt Branch</button>
+        <button class="map-tab" data-location="sa">SA Branch</button>
       </div>
+      
+              <div class="dolf-map-section">
+          <div class="dolf-map-address" id="mapAddress">Dolf Technologies - Multiple Locations (Red Pin: Egypt Branch, Blue Pin: SA Branch)</div>
+          <div class="dolf-map-iframe" id="map">
+            <div style="text-align: center; padding: 40px; color: #666;">
+              Loading map...<br>
+              <small>If the map doesn't load, please refresh the page</small>
+            </div>
+          </div>
+        </div>
       ${createContinueButton('locations')}
     `;
+    
+    // Initialize the map
+    setTimeout(() => {
+      console.log('Initializing map with timeout...');
+      initDolfMap('all');
+      
+      // Add event listeners for map tabs
+      const mapTabs = document.querySelectorAll('.map-tab');
+      console.log('Found map tabs:', mapTabs.length);
+      
+      mapTabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+          console.log('Tab clicked:', this.getAttribute('data-location'));
+          
+          // Remove active class from all tabs
+          mapTabs.forEach(t => t.classList.remove('active'));
+          // Add active class to clicked tab
+          this.classList.add('active');
+          
+          const location = this.getAttribute('data-location');
+          console.log('Updating map for location:', location);
+          updateDolfMap(location);
+        });
+      });
+    }, 100);
   } else {
     const menuItem = document.querySelector(`[data-section="${section}"]`);
     if (menuItem) menuItem.click();
@@ -189,7 +377,7 @@ const sections = {
     title: 'Contact Us',
     desc: `
       <div class="contact-section">
-        <h1>Contact Us</h1>
+        <h2>Contact Us</h2>
         <div class="contact-intro">
           Feel free to reach out to us.<br>
           <span class="contact-bold">Our team is ready to assist you with any inquiries or needs you may have.</span>
@@ -365,19 +553,49 @@ document.querySelectorAll('.menu-item').forEach(item => {
     } else if(section === 'locations') {
       mainContent.innerHTML = `<div class='card'>
         <h2 style="font-size:2em;margin-bottom:8px;"><span style="font-size:1.2em;">📍</span> Dolf Headquarters Map</h2>
+        
+        <div class="map-tabs">
+          <button class="map-tab active" data-location="all">All</button>
+          <button class="map-tab" data-location="egypt">Egypt Branch</button>
+          <button class="map-tab" data-location="sa">SA Branch</button>
+        </div>
+        
         <div class="dolf-map-section">
-          <div class="dolf-map-address">2925 طريق الأمير سلطان،،, الأندلس، 2857, Sidra Complex, الخبر 34437</div>
-          <iframe
-            class="dolf-map-iframe"
-            src="https://www.google.com/maps?q=26.293857,50.196393&hl=ar&z=17&output=embed"
-            allowfullscreen=""
-            loading="lazy"
-            referrerpolicy="no-referrer-when-downgrade"
-            title="Dolf Headquarters Location Map"
-          ></iframe>
+          <div class="dolf-map-address" id="mapAddress">Dolf Technologies - Multiple Locations (Red Pin: Egypt Branch, Blue Pin: SA Branch)</div>
+          <div class="dolf-map-iframe" id="map">
+            <div style="text-align: center; padding: 40px; color: #666;">
+              Loading map...<br>
+              <small>If the map doesn't load, please refresh the page</small>
+            </div>
+          </div>
         </div>
         ${createContinueButton('locations')}
       </div>`;
+      
+      // Initialize the map
+      setTimeout(() => {
+        console.log('Initializing map with timeout...');
+        initDolfMap('all');
+        
+        // Add event listeners for map tabs
+        const mapTabs = document.querySelectorAll('.map-tab');
+        console.log('Found map tabs:', mapTabs.length);
+        
+        mapTabs.forEach(tab => {
+          tab.addEventListener('click', function() {
+            console.log('Tab clicked:', this.getAttribute('data-location'));
+            
+            // Remove active class from all tabs
+            mapTabs.forEach(t => t.classList.remove('active'));
+            // Add active class to clicked tab
+            this.classList.add('active');
+            
+            const location = this.getAttribute('data-location');
+            console.log('Updating map for location:', location);
+            updateDolfMap(location);
+          });
+        });
+      }, 100);
     } else if(section === 'contact') {
       mainContent.innerHTML = `<div class='card'>${data.desc}</div>`;
     } else {
@@ -429,19 +647,49 @@ document.querySelectorAll('li').forEach(item => {
     item.addEventListener('click', function() {
       mainContent.innerHTML = `
         <h2 style="font-size:2em;margin-bottom:8px;"><span style="font-size:1.2em;">📍</span> Dolf Headquarters Map</h2>
+        
+        <div class="map-tabs">
+          <button class="map-tab active" data-location="all">All</button>
+          <button class="map-tab" data-location="egypt">Egypt Branch</button>
+          <button class="map-tab" data-location="sa">SA Branch</button>
+        </div>
+        
         <div class="dolf-map-section">
-          <div class="dolf-map-address">2925 طريق الأمير سلطان،،, الأندلس، 2857, Sidra Complex, الخبر 34437</div>
-          <iframe
-            class="dolf-map-iframe"
-            src="https://www.google.com/maps?q=26.293857,50.196393&hl=ar&z=17&output=embed"
-            allowfullscreen=""
-            loading="lazy"
-            referrerpolicy="no-referrer-when-downgrade"
-            title="Dolf Headquarters Location Map"
-          ></iframe>
+          <div class="dolf-map-address" id="mapAddress">Dolf Technologies - Multiple Locations (Red Pin: Egypt Branch, Blue Pin: SA Branch)</div>
+          <div class="dolf-map-iframe" id="map">
+            <div style="text-align: center; padding: 40px; color: #666;">
+              Loading map...<br>
+              <small>If the map doesn't load, please refresh the page</small>
+            </div>
+          </div>
         </div>
         ${createContinueButton('locations')}
       `;
+      
+      // Initialize the map
+      setTimeout(() => {
+        console.log('Initializing map with timeout...');
+        initDolfMap('all');
+        
+        // Add event listeners for map tabs
+        const mapTabs = document.querySelectorAll('.map-tab');
+        console.log('Found map tabs:', mapTabs.length);
+        
+        mapTabs.forEach(tab => {
+          tab.addEventListener('click', function() {
+            console.log('Tab clicked:', this.getAttribute('data-location'));
+            
+            // Remove active class from all tabs
+            mapTabs.forEach(t => t.classList.remove('active'));
+            // Add active class to clicked tab
+            this.classList.add('active');
+            
+            const location = this.getAttribute('data-location');
+            console.log('Updating map for location:', location);
+            updateDolfMap(location);
+          });
+        });
+      }, 100);
     });
   }
 });
