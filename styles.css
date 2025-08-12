@@ -232,6 +232,25 @@ p, ul, li {
   .sidebar {
     padding: 8px 0;
   }
+  
+  /* Mobile map tabs */
+  .map-tabs {
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 20px;
+  }
+  
+  .map-tab {
+    min-width: auto;
+    padding: 8px 16px;
+    font-size: 13px;
+  }
+  
+  .dolf-map-iframe {
+    width: 100%;
+    max-width: 400px;
+    height: 280px;
+  }
 }
 ::-webkit-scrollbar {
   width: 8px;
@@ -427,16 +446,75 @@ p, ul, li {
   align-items: center;
   margin-bottom: 32px;
 }
+
+/* Map Tabs Styles */
+.map-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+  justify-content: center;
+}
+
+.map-tab {
+  background: #e3f0ff;
+  border: 2px solid #b3daff;
+  border-radius: 25px;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1976d2;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 100px;
+  text-align: center;
+}
+
+.map-tab:hover {
+  background: #b3daff;
+  border-color: #2196f3;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(33, 150, 243, 0.2);
+}
+
+.map-tab.active {
+  background: #2196f3;
+  border-color: #1976d2;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+}
+
 .dolf-map-address {
   margin-bottom: 12px;
   font-size: 1.1em;
+  text-align: center;
+  max-width: 600px;
+  line-height: 1.5;
 }
 .dolf-map-iframe {
   border: 2px solid #2196f3;
   border-radius: 12px;
   box-shadow: 0 2px 12px #0002;
-  width: 520px;
-  height: 340px;
+  width: 100%;
+  max-width: 800px;
+  height: 400px;
+  position: relative;
+}
+
+/* Custom pin marker styles for Leaflet map */
+.custom-pin-marker {
+  background: transparent !important;
+  border: none !important;
+}
+
+/* Ensure Leaflet map displays properly */
+#map {
+  width: 100%;
+  height: 100%;
+  min-height: 400px;
+}
+
+.leaflet-container {
+  border-radius: 12px;
 }
 
 /* Modern Quizzes Submenu with Checkboxes */
@@ -576,4 +654,46 @@ p, ul, li {
 .service-badge:hover {
   background: #b3daff;
   color: #1976d2;
+}
+
+/* Mobile responsive styles for map */
+@media (max-width: 768px) {
+  .dolf-map-iframe {
+    width: 100%;
+    max-width: 400px;
+    height: 280px;
+  }
+  
+  .map-tabs {
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 20px;
+  }
+  
+  .map-tab {
+    min-width: auto;
+    padding: 8px 16px;
+    font-size: 13px;
+  }
+}
+
+/* Mobile responsive styles for map */
+@media (max-width: 768px) {
+  .dolf-map-iframe {
+    width: 100%;
+    max-width: 400px;
+    height: 280px;
+  }
+  
+  .map-tabs {
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 20px;
+  }
+  
+  .map-tab {
+    min-width: auto;
+    padding: 8px 16px;
+    font-size: 13px;
+  }
 } 
